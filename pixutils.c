@@ -76,21 +76,25 @@ void pixMap_apply_plugin(pixMap *p,plugin *plug){
 int pixMap_write_bmp16(pixMap *p,char *filename){
 	BMP16map *bmp16=BMP16map_init(p->imageHeight,p->imageWidth,0,5,6,5); //initialize the bmp type
 	if(!bmp16) return 1;
-	char Bbits = 5;
-	char Gbits = 6;
 	char Rbits = 5;
+	char Gbits = 6;
+	char Bbits = 5;
 	char Abits = 0;
-
 	for(int i = 0; i < p->imageHeight; i++) {
 		for(int j = 0; j < p->imageWidth; j++) {
 			//need to flip one of the the row indices when copying
 			int iPixel = p->imageHeight - i - 1;
 			int jPixel = j;
 			uint16_t pix16 = 0;
-			pix16  = (p->pixArray_overlay[iPixel][jPixel].b >> (8 - Bbits));
-			pix16 |= (p->pixArray_overlay[iPixel][jPixel].g >> (8 - Gbits)) << (Bbits);
-			pix16 |= (p->pixArray_overlay[iPixel][jPixel].r >> (8 - Rbits)) << (Bbits + Gbits);
-			pix16 |= (p->pixArray_overlay[iPixel][jPixel].a >> (8 - Abits)) << (Bbits + Gbits + Rbits);
+			uint16_t r16 = p->pixArray_overlay[iPixel][jPixel].r;
+			uint16_t g16 = p->pixArray_overlay[iPixel][jPixel].g;
+			uint16_t b16 = p->pixArray_overlay[iPixel][jPixel].b;
+			uint16_t a16 = p->pixArray_overlay[iPixel][jPixel].a;
+			r16 = (r16 >> (8 - Rbits)) << 11;
+			g16 = (g16 >> (8 - Gbits)) << 5;
+			b16 = (b16 >> (8 - Bbits));
+			a16 = (a16 >> (8 - Abits)) << 16;
+			pix16 = r16 | g16 | b16 | a16;
 			bmp16->pixArray[i][j] = pix16;
 		}
 	}
