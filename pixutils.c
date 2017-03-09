@@ -185,6 +185,7 @@ static void convolution(pixMap *p, pixMap *oldPixMap,int i, int j,void *data){
 	int (*kernel)[3] = data;
 	int accumR = 0, accumG = 0, accumB = 0, accumA = 0;
 	float kernSum = 0;
+	//sum the kernel
 	for(int x = 0; x < 3; x++) {
 		for(int y = 0; y < 3; y++) {
 			kernSum += kernel[x][y];
@@ -201,30 +202,38 @@ static void convolution(pixMap *p, pixMap *oldPixMap,int i, int j,void *data){
 			else if(keIndex > oldPixMap->imageWidth - 1) keIndex = oldPixMap->imageWidth - 1;
 			//multiply element value corresponding* to pixel value
 			//normalize by dividing by the sum of all the elements in the matrix
-			// need absolute value for negative kernal and no normalizing.
+			//need absolute value for negative kernal and no normalizing.
 			if (kernSum == 0) {
 				accumR += fabs(oldPixMap->pixArray_overlay[keIndex][krIndex].r * (kernel[kernEle + 1][kernRow + 1]));
 				accumG += fabs(oldPixMap->pixArray_overlay[keIndex][krIndex].g * (kernel[kernEle + 1][kernRow + 1]));
 				accumB += fabs(oldPixMap->pixArray_overlay[keIndex][krIndex].b * (kernel[kernEle + 1][kernRow + 1]));
 				accumA += fabs(oldPixMap->pixArray_overlay[keIndex][krIndex].a * (kernel[kernEle + 1][kernRow + 1]));
 			} else {
-			accumR += (oldPixMap->pixArray_overlay[keIndex][krIndex].r * (kernel[kernEle + 1][kernRow + 1])) / kernSum;
-			accumG += (oldPixMap->pixArray_overlay[keIndex][krIndex].g * (kernel[kernEle + 1][kernRow + 1])) / kernSum;
-			accumB += (oldPixMap->pixArray_overlay[keIndex][krIndex].b * (kernel[kernEle + 1][kernRow + 1])) / kernSum;
-			accumA += (oldPixMap->pixArray_overlay[keIndex][krIndex].a * (kernel[kernEle + 1][kernRow + 1])) / kernSum;
+				accumR += (oldPixMap->pixArray_overlay[keIndex][krIndex].r * (kernel[kernEle + 1][kernRow + 1])) / kernSum;
+				accumG += (oldPixMap->pixArray_overlay[keIndex][krIndex].g * (kernel[kernEle + 1][kernRow + 1])) / kernSum;
+				accumB += (oldPixMap->pixArray_overlay[keIndex][krIndex].b * (kernel[kernEle + 1][kernRow + 1])) / kernSum;
+				accumA += (oldPixMap->pixArray_overlay[keIndex][krIndex].a * (kernel[kernEle + 1][kernRow + 1])) / kernSum;
 			}
 		}
 	}
-	// if the pixel is greater less than zero set to 0
-	// if the pixel is greater than 255 set to 255
-	if(accumR > 255) accumR = 255;
+	//if the pixel is less than zero set to 0
+	//if the pixel is greater than 255 set to 255
+	//if kernel sum is equal to 0 and pixel is greater than 255 set pixel to 0 to invert the color from white to black
+	if (accumR > 255 && kernSum == 0) accumR = 0;
+	else if(accumR > 255) accumR = 255;
 	else if (accumR < 0) accumR = 0;
-	if(accumG > 255) accumG = 255;
+
+	if (accumG > 255 && kernSum == 0) accumG = 0;
+	else if(accumG > 255) accumG = 255;
 	else if (accumG < 0) accumG = 0;
-	if(accumB > 255) accumB = 255;
+
+	if (accumB > 255 && kernSum == 0) accumB = 0;
+	else if(accumB > 255) accumB = 255;
 	else if (accumB < 0) accumB = 0;
-	if(accumA > 255) accumA = 255;
+
+	if(accumA > 255) accumA = 255; //leave transparancy alone
 	else if (accumA < 0) accumA = 0;
+
 	// add the accumulator to pixArray_overlay at index i and j
 	p->pixArray_overlay[i][j].r = accumR;
 	p->pixArray_overlay[i][j].g = accumG;
